@@ -241,17 +241,46 @@ baltimore_result
 
 
 ```
+
+
 ```{r}
-# Run prop.test for each city
-city_tests <- homicide_summary %>%
+# Load necessary libraries
+library(dplyr)
+library(broom)
+
+# Summarize the data for total and unsolved homicides per city
+homicide_summary <- homicide_data %>%
+  mutate(city_state = paste(city, state, sep = ", ")) %>%
+  group_by(city_state) %>%
+  summarize(
+    total_homicides = n(),
+    unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest")),
+    .groups = "drop"
+  )
+
+# Apply prop.test to each city and extract proportion and confidence intervals
+city_results <- homicide_summary %>%
+  rowwise() %>%
   mutate(
-    test_result = map2(unsolved_homicides, total_homicides, ~ prop.test(.x, .y)),
-    tidy_result = map(test_result, tidy)
+    test_result = list(prop.test(unsolved_homicides, total_homicides)),
+    tidy_result = list(tidy(test_result))
   ) %>%
   unnest(tidy_result) %>%
   select(city_state, estimate, conf.low, conf.high)
 
+# Rename columns for clarity
+city_results <- city_results %>%
+  rename(
+    proportion_unsolved = estimate,
+    ci_lower = conf.low,
+    ci_upper = conf.high
+  )
+
+# View the extracted results
+print(city_results)
+
 ```
+
 
 ```{r}
 # Plotting estimates and CIs
