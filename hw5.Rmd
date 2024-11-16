@@ -221,7 +221,7 @@ homicide_summary <- homicide_data %>%
     total_homicides = n(),
     unsolved_homicides = sum(disposition %in% c("Closed without arrest", "Open/No arrest"))
   )
-
+homicide_summary
 ```
 
 ```{r}
